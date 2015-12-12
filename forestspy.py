@@ -1,4 +1,5 @@
 from collections import namedtuple
+import numba
 Node = namedtuple('Node', ['feature_id', 'feature_value', 'threshold', 'left', 'right', 'class_distribution', 'feature_name'])
 
 class ForestSpy(object):
@@ -14,6 +15,21 @@ class ForestSpy(object):
 
     def predict_nodes(self, features):
         return [t.predicted_node(features) for t in self.trees]
+
+
+@numba.jit(nopython=True)
+def predicted_node_numba(features, feature_ids, thresholds, children_right, children_left):
+    node_id = 0
+    while node_id != -1:
+        prev_node_id = node_id
+        feature_id = feature_ids[node_id]
+        feature_value = features[feature_id]
+        threshold = thresholds[node_id]
+        if feature_value > threshold:
+            node_id = children_right[node_id]
+        else:
+            node_id = children_left[node_id]
+    return prev_node_id
 
 class Tree(object):
     def __init__(self, decision_tree, feature_names):
@@ -52,17 +68,8 @@ class Tree(object):
         return path
 
     def predicted_node(self, features):
-        node_id = 0
-        while node_id != -1:
-            prev_node_id = node_id
-            feature_id = self.feature_ids[node_id]
-            feature_value = features[feature_id]
-            threshold = self.threshold[node_id]
-            if feature_value > threshold:
-                node_id = self.children_right[node_id]
-            else:
-                node_id = self.children_left[node_id]
-        return prev_node_id
+        return predicted_node_numba(features, self.feature_ids, self.threshold, self.children_right, self.children_left)
+
 
     def print_path_from_node(self, node_id, features):
         node = self.node(node_id, features)
