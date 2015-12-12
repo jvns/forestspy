@@ -18,7 +18,7 @@ class ForestSpy(object):
 
 
 @numba.jit(nopython=True)
-def predicted_node_numba(features, feature_ids, thresholds, children_right, children_left):
+def _predicted_node(features, feature_ids, thresholds, children_right, children_left):
     node_id = 0
     while node_id != -1:
         prev_node_id = node_id
@@ -68,7 +68,7 @@ class Tree(object):
         return path
 
     def predicted_node(self, features):
-        return predicted_node_numba(features, self.feature_ids, self.threshold, self.children_right, self.children_left)
+        return _predicted_node(features, self.feature_ids, self.threshold, self.children_right, self.children_left)
 
 
     def print_path_from_node(self, node_id, features):
