@@ -30,15 +30,13 @@ class Tree(object):
 
     def node(self, node_id, features):
         feature_id = self.feature_ids[node_id]
-        return Node(
-            feature_id=feature_id,
-            feature_name=self.feature_names[feature_id],
-            feature_value=features[feature_id],
-            class_distribution=self.value[node_id],
-            threshold=self.threshold[node_id],
-            left=self.children_left[node_id],
-            right=self.children_right[node_id]
-        )
+        feature_name=self.feature_names[feature_id]
+        feature_value=features[feature_id]
+        class_distribution=self.value[node_id]
+        threshold=self.threshold[node_id]
+        left=self.children_left[node_id]
+        right=self.children_right[node_id]
+        return Node(feature_id=feature_id, feature_name=feature_name, feature_value=feature_value, class_distribution=class_distribution, threshold=threshold, left=left, right=right )
     
     def path_list(self, features):
         node_id = 0
@@ -47,7 +45,7 @@ class Tree(object):
             node = self.node(node_id, features)
             if node.feature_value > node.threshold:
                 path.append((node.feature_name, node.feature_value))
-                node_id = node.right
+                node_id = node.right 
             else:
                 node_id = node.left
         #print node.class_distribution
@@ -57,11 +55,13 @@ class Tree(object):
         node_id = 0
         while node_id != -1:
             prev_node_id = node_id
-            node = self.node(node_id, features)
-            if node.feature_value > node.threshold:
-                node_id = node.right
+            feature_id = self.feature_ids[node_id]
+            feature_value = features[feature_id]
+            threshold = self.threshold[node_id]
+            if feature_value > threshold:
+                node_id = self.children_right[node_id]
             else:
-                node_id = node.left
+                node_id = self.children_left[node_id]
         return prev_node_id
 
     def print_path_from_node(self, node_id, features):
