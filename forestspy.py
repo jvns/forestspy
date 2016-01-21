@@ -1,6 +1,7 @@
 from collections import namedtuple
 import numba
-Node = namedtuple('Node', ['feature_id', 'feature_value', 'threshold', 'left', 'right', 'class_distribution', 'feature_name'])
+import numpy as np
+Node = namedtuple('Node', ['feature_id', 'threshold', 'left', 'right', 'class_distribution', 'feature_name'])
 
 class ForestSpy(object):
     def __init__(self, forest_classifier, feature_names):
@@ -41,18 +42,29 @@ class Tree(object):
         self.feature_ids = self.tree.feature
         self.value = self.tree.value
     
+    def condition(self, node_id):
+        node = self.node(node_id)
+        return node
+
+    def parent(self, node_id):
+        left_parent = np.nonzero(self.children_left == node_id)[0]
+        right_parent = np.nonzero(self.children_right == node_id)[0]
+        if len(left_parent) > 0:
+            return left_parent[0], '<'
+        else:
+            return right_parent[0], '>'
+
     def print_path(self, features):
         self.print_path_from_node(0, features)
 
-    def node(self, node_id, features):
+    def node(self, node_id):
         feature_id = self.feature_ids[node_id]
         feature_name=self.feature_names[feature_id]
-        feature_value=features[feature_id]
         class_distribution=self.value[node_id]
         threshold=self.threshold[node_id]
         left=self.children_left[node_id]
         right=self.children_right[node_id]
-        return Node(feature_id=feature_id, feature_name=feature_name, feature_value=feature_value, class_distribution=class_distribution, threshold=threshold, left=left, right=right )
+        return Node(feature_id=feature_id, feature_name=feature_name, class_distribution=class_distribution, threshold=threshold, left=left, right=right )
     
     def path_list(self, features):
         node_id = 0
