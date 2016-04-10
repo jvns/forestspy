@@ -8,7 +8,7 @@ class ForestSpy(object):
         self.forest = forest_classifier
         self.feature_names = feature_names
         self.populate_trees()
-    
+
     def populate_trees(self):
         self.trees = []
         for est in self.forest.estimators_:
@@ -41,7 +41,7 @@ class Tree(object):
         self.children_left = self.tree.children_left
         self.feature_ids = self.tree.feature
         self.value = self.tree.value
-    
+
     def condition(self, node_id):
         node = self.node(node_id)
         return node
@@ -65,36 +65,24 @@ class Tree(object):
         left=self.children_left[node_id]
         right=self.children_right[node_id]
         return Node(feature_id=feature_id, feature_name=feature_name, class_distribution=class_distribution, threshold=threshold, left=left, right=right )
-    
-    def path_list(self, features):
+
+    def predicates(self, features):
         node_id = 0
-        path = []
+        predicates = []
         while node_id != -1:
-            node = self.node(node_id, features)
-            if node.feature_value > node.threshold:
-                path.append((node.feature_name, node.feature_value))
-                node_id = node.right 
+            node = self.node(node_id)
+            value = features[node.feature_id]
+            if value > node.threshold:
+                format_string = "{feature} > {threshold}"
+                node_id = node.right
             else:
+                format_string = "{feature} <= {threshold}"
                 node_id = node.left
-        #print node.class_distribution
-        return path
+            predicates.append(format_string.format(
+                feature=node.feature_name,
+                threshold=node.threshold))
+        print node.class_distribution
+        return '\n AND '.join(sorted(predicates))
 
     def predicted_node(self, features):
         return _predicted_node(features, self.feature_ids, self.threshold, self.children_right, self.children_left)
-
-
-    def print_path_from_node(self, node_id, features):
-        node = self.node(node_id, features)
-        if node.feature_value > node.threshold:
-            #print "-> ",
-            next_node = node.right
-        else:
-            #print "   ",
-            next_node = node.left
-        if next_node == -1:
-            #print node.class_distribution
-            return
-        else:
-            pass
-            #print  node.feature_name, node.threshold, node.feature_value
-        self.print_path_from_node(next_node, features)
